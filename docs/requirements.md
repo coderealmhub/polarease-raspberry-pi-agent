@@ -15,5 +15,5 @@ pip install python-socketio
 pip install socketio
 pip install requests
 pip install websocket-client
-pip install netifaces
+pip install aiohttp
 ```

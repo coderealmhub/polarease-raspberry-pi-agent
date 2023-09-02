@@ -1,25 +1,37 @@
 import socketio
-import threading
+from fastapi import FastAPI
+
+app = FastAPI()
 
 server_url = "http://127.0.0.1:9000"
+
 uuid = "fee13069-db12-49f3-bd47-405048867301"
 
-
-def socket_io_client():
-    cl = socketio.Client()
-
-    @cl.on("event_name")
-    def foo(data):
-        print(f"client 1 {data}")
-
-    cl.connect(f"{server_url}?uuid={uuid}")
-
-    cl.wait()
+sio = socketio.AsyncClient()
 
 
-client_thread = threading.Thread(target=socket_io_client)
-client_thread.daemon = True
-client_thread.start()
+@app.on_event("startup")
+async def startup_event():
+    await sio.connect(f"{server_url}?uuid={uuid}")
+    print("🔌 Connected")
 
-while True:
-    pass
+
+@app.get("/send_message")
+async def send_message():
+    await sio.emit("receive", "Olá, servidor principal!")
+
+    return {"message": "Dados enviados com sucesso"}
+
+
+@sio.on("receive")
+async def receive(message):
+    try:
+        print(f"message: {message}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)
