@@ -29,6 +29,7 @@ pycodestyle==2.8.0
 pydantic==2.3.0
 pydantic_core==2.6.3
 pyflakes==2.4.0
+pygame==2.5.1
 python-dotenv==1.0.0
 python-engineio==4.6.1
 python-socketio==5.8.0
