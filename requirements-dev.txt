@@ -1,0 +1,5 @@
+coverage==6.2
+black==22.3.0
+flake8==4.0.1
+
+sentry-sdk==1.5.1
