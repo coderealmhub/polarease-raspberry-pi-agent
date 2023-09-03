@@ -3,13 +3,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import psutil
 import uvicorn
 import socketio
 from fastapi import FastAPI
 from app.utils import get_info_raspbarrypi
 import RPi.GPIO as GPIO
 
-import psutil
+
+app = FastAPI()
+
+server_url = getenv("server.url")
+
+uuid = getenv("app.uuid")
+
+sio = socketio.AsyncClient()
+
+
+led_pin = 17
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(led_pin, GPIO.OUT)
 
 
 def get_info_raspbarrypi():
@@ -51,21 +65,6 @@ def get_info_raspbarrypi():
     }
 
     return info
-
-
-app = FastAPI()
-
-server_url = getenv("server.url")
-
-uuid = getenv("app.uuid")
-
-sio = socketio.AsyncClient()
-
-
-led_pin = 17
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(led_pin, GPIO.OUT)
 
 
 def open_door():
