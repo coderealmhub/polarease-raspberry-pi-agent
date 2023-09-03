@@ -6,23 +6,24 @@ load_dotenv()
 import psutil
 import uvicorn
 import socketio
+import cv2
+import datetime
+import pygame
 from fastapi import FastAPI
 import RPi.GPIO as GPIO
 
-
-app = FastAPI()
-
 server_url = getenv("server.url")
-
 uuid = getenv("app.uuid")
 
 sio = socketio.AsyncClient()
+app = FastAPI()
 
+pygame.mixer.init()
 
-led_pin = 17
+magnetic_pin = 17
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(led_pin, GPIO.OUT)
+GPIO.setup(magnetic_pin, GPIO.OUT)
 
 
 def get_info_raspbarrypi():
@@ -66,12 +67,60 @@ def get_info_raspbarrypi():
     return info
 
 
+def record_video():
+    cameras = []
+
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+
+        if cap.isOpened():
+            cameras.append(cap)
+        else:
+            cap.release()
+
+    if not cameras:
+        print("Error not found cam.")
+        return
+
+    cap = cameras[0]
+
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    now = datetime.datetime.now()
+    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
+    out = cv2.VideoWriter(f"recordings/{date_time}.avi", cv2.VideoWriter_fourcc(*"XVID"), 30.0, (640, 480))
+
+    start_time = datetime.datetime.now()
+    while (datetime.datetime.now() - start_time).total_seconds() < 5:
+        ret, frame = cap.read()
+        if ret:
+            out.write(frame)
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
+def play_mp3(file_path):
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.delay(100)
+
+
 def open_door():
-    GPIO.output(led_pin, GPIO.HIGH)
+    GPIO.output(magnetic_pin, GPIO.HIGH)
+    print("Open door")
+    record_video()
+    play_mp3("assets/soar-polarease-9mcmq-speed-1x.mp3")
+    message = "Open door"
+    return message
 
 
 def close_door():
-    GPIO.output(led_pin, GPIO.LOW)
+    GPIO.output(magnetic_pin, GPIO.LOW)
+    print("Close door")
 
 
 @app.on_event("startup")
@@ -93,8 +142,7 @@ async def receive_message(message):
             info = get_info_raspbarrypi()
             await sio.emit("receive_message", info)
         elif message == "open_the_door":
-            print("Open door")
-            message = "Open door"
+            message = open_door()
             await sio.emit("receive_message", message)
     except Exception as e:
         print(f"Error: {e}")

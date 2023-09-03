@@ -6,13 +6,25 @@ load_dotenv()
 import psutil
 import uvicorn
 import socketio
+import cv2
+import datetime
+import threading
+from pydub import AudioSegment
+from pydub.playback import play
 from fastapi import FastAPI
+
+# import RPi.GPIO as GPIO
 
 server_url = getenv("server.url")
 uuid = getenv("app.uuid")
 
 sio = socketio.AsyncClient()
 app = FastAPI()
+
+# magnetic_pin = 17
+
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(magnetic_pin, GPIO.OUT)
 
 
 def get_info_raspbarrypi():
@@ -56,6 +68,78 @@ def get_info_raspbarrypi():
     return info
 
 
+def record_video():
+    cameras = []
+
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+
+        if cap.isOpened():
+            cameras.append(cap)
+        else:
+            cap.release()
+
+    if not cameras:
+        print("Error not found cam.")
+        return
+
+    cap = cameras[0]
+
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"XVID"))
+    cap.set(cv2.CAP_PROP_FPS, 30)
+
+    now = datetime.datetime.now()
+    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
+    out = cv2.VideoWriter(
+        f"recordings/{date_time}.avi",
+        cv2.VideoWriter_fourcc(*"XVID"),
+        30.0,
+        (640, 480),
+        isColor=True,
+    )
+
+    start_time = datetime.datetime.now()
+    while (datetime.datetime.now() - start_time).total_seconds() < 10:
+        ret, frame = cap.read()
+        if ret:
+            out.write(frame)
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
+def play_mp3():
+    mp3_file_path = "assets/soar-polarease-9mcmq-speed-1x.mp3"
+    audio = AudioSegment.from_mp3(mp3_file_path)
+    play(audio)
+
+
+async def open_door():
+    # GPIO.output(magnetic_pin, GPIO.HIGH)
+    print("Open door")
+
+    video_thread = threading.Thread(target=record_video)
+    video_thread.start()
+
+    audio_thread = threading.Thread(target=play_mp3)
+    audio_thread.start()
+
+    video_thread.join()
+    audio_thread.join()
+
+    message = "Open door"
+
+    return message
+
+
+async def close_door():
+    # GPIO.output(magnetic_pin, GPIO.LOW)
+    print("Close door")
+
+
 @app.on_event("startup")
 async def startup_event():
     await sio.connect(f"{server_url}?uuid={uuid}")
@@ -75,8 +159,7 @@ async def receive_message(message):
             info = get_info_raspbarrypi()
             await sio.emit("receive_message", info)
         elif message == "open_the_door":
-            print("Open door")
-            message = "Open door"
+            message = await open_door()
             await sio.emit("receive_message", message)
     except Exception as e:
         print(f"Error: {e}")
