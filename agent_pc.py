@@ -6,6 +6,8 @@ load_dotenv()
 import psutil
 import uvicorn
 import socketio
+import cv2
+import datetime
 from fastapi import FastAPI
 
 server_url = getenv("server.url")
@@ -56,6 +58,41 @@ def get_info_raspbarrypi():
     return info
 
 
+def record_video():
+    cameras = []
+
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+
+        if cap.isOpened():
+            cameras.append(cap)
+        else:
+            cap.release()
+
+    if not cameras:
+        print("Error not found cam.")
+        return
+
+    cap = cameras[0]
+
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    now = datetime.datetime.now()
+    date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
+    out = cv2.VideoWriter(f"{date_time}.avi", cv2.VideoWriter_fourcc(*"XVID"), 30.0, (640, 480))
+
+    start_time = datetime.datetime.now()
+    while (datetime.datetime.now() - start_time).total_seconds() < 5:
+        ret, frame = cap.read()
+        if ret:
+            out.write(frame)
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
 @app.on_event("startup")
 async def startup_event():
     await sio.connect(f"{server_url}?uuid={uuid}")
@@ -76,6 +113,7 @@ async def receive_message(message):
             await sio.emit("receive_message", info)
         elif message == "open_the_door":
             print("Open door")
+            record_video()
             message = "Open door"
             await sio.emit("receive_message", message)
     except Exception as e:
