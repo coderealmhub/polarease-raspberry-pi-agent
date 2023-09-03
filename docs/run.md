@@ -5,7 +5,7 @@
 ```bash
 python run.py
 
-uvicorn app:app --reload --port 8000
+uvicorn agent:app --reload --port 8000
 ```
 
 ## Start system
