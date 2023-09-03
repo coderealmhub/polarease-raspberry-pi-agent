@@ -1,3 +1,8 @@
+from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import socketio
 from fastapi import FastAPI
 from app.utils import get_info_raspbarrypi
@@ -5,14 +10,15 @@ import RPi.GPIO as GPIO
 
 app = FastAPI()
 
-server_url = "http://127.0.0.1:9000"
+server_url = getenv("server.url")
 
-uuid = "fee13069-db12-49f3-bd47-405048867301"
+uuid = getenv("app.uuid")
 
 sio = socketio.AsyncClient()
 
 
 led_pin = 17
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(led_pin, GPIO.OUT)
 
