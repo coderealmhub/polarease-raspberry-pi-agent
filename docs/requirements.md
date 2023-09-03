@@ -16,4 +16,9 @@ pip install socketio
 pip install requests
 pip install websocket-client
 pip install aiohttp
+
+pip install RPi.GPIO
+pip install opencv-python
+pip install pygame
+pip install imageio-ffmpeg
 ```

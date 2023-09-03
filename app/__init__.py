@@ -1,6 +1,7 @@
 import socketio
 from fastapi import FastAPI
 from app.utils import get_info_raspbarrypi
+import RPi.GPIO as GPIO
 
 app = FastAPI()
 
@@ -9,6 +10,19 @@ server_url = "http://127.0.0.1:9000"
 uuid = "fee13069-db12-49f3-bd47-405048867301"
 
 sio = socketio.AsyncClient()
+
+
+led_pin = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(led_pin, GPIO.OUT)
+
+
+def open_door():
+    GPIO.output(led_pin, GPIO.HIGH)
+
+
+def close_door():
+    GPIO.output(led_pin, GPIO.LOW)
 
 
 @app.on_event("startup")
