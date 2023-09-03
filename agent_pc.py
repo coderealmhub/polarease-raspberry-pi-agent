@@ -7,22 +7,12 @@ import psutil
 import uvicorn
 import socketio
 from fastapi import FastAPI
-import RPi.GPIO as GPIO
-
-
-app = FastAPI()
 
 server_url = getenv("server.url")
-
 uuid = getenv("app.uuid")
 
 sio = socketio.AsyncClient()
-
-
-led_pin = 17
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(led_pin, GPIO.OUT)
+app = FastAPI()
 
 
 def get_info_raspbarrypi():
@@ -66,21 +56,13 @@ def get_info_raspbarrypi():
     return info
 
 
-def open_door():
-    GPIO.output(led_pin, GPIO.HIGH)
-
-
-def close_door():
-    GPIO.output(led_pin, GPIO.LOW)
-
-
 @app.on_event("startup")
 async def startup_event():
     await sio.connect(f"{server_url}?uuid={uuid}")
     print("🔌 Connected")
 
 
-@app.get("/send_message/{message}")
+@app.get("/send_message")
 async def send_message(message):
     await sio.emit("receive_message", "Olá, servidor principal!")
     return {"message": "Dados enviados com sucesso"}

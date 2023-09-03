@@ -22,9 +22,7 @@ if not os.path.exists(installation_dir):
 urllib.request.urlretrieve(agent_url, os.path.join(installation_dir, "agent.py"))
 
 # Baixa o arquivo requirements.txt
-urllib.request.urlretrieve(
-    requirements_url, os.path.join(installation_dir, "requirements.txt")
-)
+urllib.request.urlretrieve(requirements_url, os.path.join(installation_dir, "requirements.txt"))
 
 # Cria um ambiente virtual
 subprocess.run(["python3", "-m", "venv", os.path.join(installation_dir, ".venv")])

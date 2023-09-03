@@ -53,11 +53,11 @@ install-default:
 	pip install -r requirements.txt
 
 lint:
-	black --line-length=100 --target-version=py38 --check .
-	flake8 --max-line-length=100 --ignore=E402,W503,E712 --exclude .venv
+	black --line-length=200 --target-version=py38 --check .
+	flake8 --max-line-length=200 --ignore=E402,W503,E712 --exclude .venv
 
 format:
-	black --line-length=100 --target-version=py38 .
+	black --line-length=200 --target-version=py38 .
 
 test-integration:
 	python -m unittest discover -p "itest*.py"
