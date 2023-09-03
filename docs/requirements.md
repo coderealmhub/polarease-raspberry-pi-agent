@@ -24,6 +24,10 @@ pip install websocket-client
 pip install aiohttp
 
 pip install RPi.GPIO
+
+pip install opencv-python
+
+pip install pydub
 ```
 
 
